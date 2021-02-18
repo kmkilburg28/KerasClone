@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Kaden's Website</title>
+	<link rel="stylesheet" href="../riak.css" type="text/css">
+</head>
+<body class="article">
+<div id="header">
+	<h1>Simple Keras Clone</h1>
+	<span id="author">Kaden Kilburg</span></br>
+	<span id="email" class="monospaced">
+		&lt;<a href="mailto:Your Email">kadenk@iastate.edu</a>&gt;
+	</span></br>
+</div>
+<div id="content">
+	<p>
+		Here is a project I casually work own during long car rides.
+		This Keras clone only supports Sequential Deep Neural Nets with 
+		linear, ReLU, and sigmoid activation functions and a Mean Square Error loss function.
+	</p>
+
+	<div class="listingblock">
+		<div class="title">Source: Keras</div>
+		<div class="content monospaced">
+			<div class="codetext">
+				<object class="codeobject" type="text/html" data="Keras.js"></object>
+			</div>
+		</div>
+	</div>
+	
+	<div>
+		<p>Here is an customizable implementation with the Boston Housing Dataset.</p>
+		<form onsubmit="return run_model_settings(event)">
+			<table>
+				<tr>
+					<td><label>Learning Rate:</label></td>
+					<td><input type="text" id="learning_rate" value="0.0001"/></td>
+				</tr>
+				<tr>
+					<td><label>Hidden Layers:</label></td>
+					<td><input type="number" id="layers" min="0" value="1"/></td>
+				</tr>
+				<tr>
+					<td><label>Layer Units:</label></td>
+					<td><input type="number" id="units" min="1" value="16"/></td>
+				</tr>
+				<tr>
+					<td><label>Activation Function:</label></td>
+					<td><select id="activation_f">
+						<option value="linear">Linear</option>
+						<option value="relu">ReLU</option>
+						<option value="sigmoid">Sigmoid</option>
+					</select></td>
+				</tr>
+				<tr>
+					<td><label>Epochs:</label></td>
+					<td><input type="number" id="epochs" min="1" value="10"/></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>
+						<button>Run</button>
+					</td>
+				</tr>
+			</table>
+		</form>
+		<script src="Dataset.js"></script>
+		<script src="Keras.js"></script>
+		<!-- <div style="visibility: hidden;">
+			<object id="boston.txt" type="text/txt" data="datasets/boston.txt"></object>
+		</div> -->
+		<div class="listingblock">
+			<div class="title">Boston Housing Dataset</div>
+			<div class="content monospaced">
+				<div class="codetext">
+					<object class="codeobject" id="dataset" type="text/txt" data="datasets/boston.txt"></object>
+				</div>
+			</div>
+		</div>
+		<script>
+			// let datasetModule = importModule('Dataset');
+			var train;
+			let retrieveData = async () => {
+				train = await datasetModule.getBostonDataset();
+				console.log(train);
+			}
+			retrieveData();
+			// console.log(typeof(train_x))
+	
+			console.log(keras);
+			// let keras = importModule('Keras');
+	
+			function run_model_settings(e) {
+				e.preventDefault();
+				form = e.target;
+				let learning_rate = parseFloat(form['learning_rate'].value);
+				let hidden_layers = parseInt(form['layers'].value);
+				let units         = parseInt(form['units'].value);
+				let activation_f  = form['activation_f'].value;
+				let n_epochs      = parseInt(form['epochs'].value);
+
+				var train_x = {'MEDV': train['MEDV']};
+				var train_y = {'MEDV': train['MEDV']};
+
+				train_x = datasetModule.datasetToTensor(train_x);
+				train_y = datasetModule.datasetToTensor(train_y);
+				
+				let nInputs = train_x[0].length;
+				let model = create_model(learning_rate, hidden_layers, units, activation_f, nInputs);
+				console.log(model);
+				console.log(model.layers);
+				let history = model.fit(train_x, train_y, epochs=n_epochs, batch_size=1);
+				let prediction = model.predict(train_x);
+				console.log(prediction);
+				alert(prediction);
+				return 0;
+			}
+			
+			function create_model(learning_rate=0.01, hidden_layers, hidden_units, activation_f='linear', nInputs=1) {
+				let model = new keras.SequentialModel([
+					new keras.InputLayer(units=nInputs),
+				]);
+				console.log(hidden_units)
+				for (let i = 0; i < hidden_layers; i++) {
+					model.add(new keras.DenseLayer(units=hidden_units, activation=activation_f));
+				}
+				model.add(new keras.DenseLayer(units=1, activation=activation_f));
+				model.compile(learningRate=learning_rate);
+				return model;
+			}
+	
+	
+	
+		</script>
+	</div>
+</div>
+
+</body>
+</html>
