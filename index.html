@@ -17,7 +17,8 @@
 	<p>
 		Here is a project I casually work own during long car rides.
 		This Keras clone only supports Sequential Deep Neural Nets with 
-		linear, ReLU, and sigmoid activation functions and a Mean Square Error loss function.
+		linear, ReLU, and sigmoid activation functions and a Mean Square Error loss function,
+		and there are certainly bugs to fix and improvements to be made.
 	</p>
 
 	<div class="listingblock">
@@ -30,8 +31,9 @@
 	</div>
 	
 	<div>
-		<p>Here is an customizable implementation with the Boston Housing Dataset.</p>
-		<form onsubmit="return run_model_settings(event)">
+		<p>Here is an customizable implementation with the Boston Housing Dataset. However, it trains on the test set as of now.</br>
+		Note: if the learning rate is too high, then the predictions may result in NaNs. Additionally, there is no normalization of the dataset.</p>
+		<form id="form" onsubmit="return run_model_settings(event)">
 			<table>
 				<tr>
 					<td><label>Learning Rate:</label></td>
@@ -54,6 +56,16 @@
 					</select></td>
 				</tr>
 				<tr>
+					<td><label>Input Fields:</label></td>
+					<td><select id="input_fields" multiple>
+					</select></td>
+				</tr>
+				<tr>
+					<td><label>Predict Fields:</label></td>
+					<td><select id="predict_fields" multiple>
+					</select></td>
+				</tr>
+				<tr>
 					<td><label>Epochs:</label></td>
 					<td><input type="number" id="epochs" min="1" value="10"/></td>
 				</tr>
@@ -67,11 +79,8 @@
 		</form>
 		<script src="Dataset.js"></script>
 		<script src="Keras.js"></script>
-		<!-- <div style="visibility: hidden;">
-			<object id="boston.txt" type="text/txt" data="datasets/boston.txt"></object>
-		</div> -->
 		<div class="listingblock">
-			<div class="title">Boston Housing Dataset</div>
+			<div class="title">Boston Housing Dataset: <a href="http://lib.stat.cmu.edu/datasets/boston">http://lib.stat.cmu.edu/datasets/boston</a></div>
 			<div class="content monospaced">
 				<div class="codetext">
 					<object class="codeobject" id="dataset" type="text/txt" data="datasets/boston.txt"></object>
@@ -79,41 +88,57 @@
 			</div>
 		</div>
 		<script>
-			// let datasetModule = importModule('Dataset');
 			var train;
 			let retrieveData = async () => {
 				train = await datasetModule.getBostonDataset();
-				console.log(train);
+				let form = document.getElementById("form");
+				let selects = [
+					form['input_fields'],
+					form['predict_fields']
+				];
+				for (let select of selects) {
+					for (let attribute in train) {
+						let option = document.createElement("option");
+						option.textContent = attribute;
+						option.setAttribute("value", attribute);
+						select.appendChild(option);
+					}
+				}
+				Array.from(selects[0].children).map(option => { if (option.value === "RM") option.setAttribute("selected", "selected") });
+				selects[selects.length-1].children[selects[selects.length-1].children.length-1].setAttribute("selected", "selected"); 
 			}
 			retrieveData();
-			// console.log(typeof(train_x))
-	
-			console.log(keras);
-			// let keras = importModule('Keras');
-	
+		
 			function run_model_settings(e) {
 				e.preventDefault();
 				form = e.target;
-				let learning_rate = parseFloat(form['learning_rate'].value);
-				let hidden_layers = parseInt(form['layers'].value);
-				let units         = parseInt(form['units'].value);
-				let activation_f  = form['activation_f'].value;
-				let n_epochs      = parseInt(form['epochs'].value);
+				let learning_rate  = parseFloat(form['learning_rate'].value);
+				let hidden_layers  = parseInt(form['layers'].value);
+				let units          = parseInt(form['units'].value);
+				let activation_f   = form['activation_f'].value;
+				let n_epochs       = parseInt(form['epochs'].value);
+				let input_fields   = Array.from(form['input_fields'].selectedOptions).map(x => x.value);
+				let predict_fields   = Array.from(form['predict_fields'].selectedOptions).map(x => x.value);
 
-				var train_x = {'MEDV': train['MEDV']};
-				var train_y = {'MEDV': train['MEDV']};
+				var train_x = {};
+				for (let attribute of input_fields) {
+					train_x[attribute] = train[attribute];
+				}
+				var train_y = {};
+				for (let attribute of predict_fields) {
+					train_y[attribute] = train[attribute];
+				}
+
 
 				train_x = datasetModule.datasetToTensor(train_x);
 				train_y = datasetModule.datasetToTensor(train_y);
 				
 				let nInputs = train_x[0].length;
 				let model = create_model(learning_rate, hidden_layers, units, activation_f, nInputs);
-				console.log(model);
-				console.log(model.layers);
 				let history = model.fit(train_x, train_y, epochs=n_epochs, batch_size=1);
 				let prediction = model.predict(train_x);
-				console.log(prediction);
-				alert(prediction);
+				console.log("Predictions", prediction);
+				alert("Predictions: " + prediction);
 				return 0;
 			}
 			
@@ -121,11 +146,10 @@
 				let model = new keras.SequentialModel([
 					new keras.InputLayer(units=nInputs),
 				]);
-				console.log(hidden_units)
 				for (let i = 0; i < hidden_layers; i++) {
 					model.add(new keras.DenseLayer(units=hidden_units, activation=activation_f));
 				}
-				model.add(new keras.DenseLayer(units=1, activation=activation_f));
+				model.add(new keras.DenseLayer(units=1, activation=''));
 				model.compile(learningRate=learning_rate);
 				return model;
 			}

@@ -90,7 +90,7 @@ class DenseLayer extends Layer {
 	}
 	sigmoid(x, derivative=false) {
 		if (derivative) {
-			let sigmoid = this.sigmoid(x, derivative);	
+			let sigmoid = this.sigmoid(x, false);	
 			return sigmoid * (1 - sigmoid);
 		}
 		else {
@@ -118,10 +118,10 @@ class SequentialModel {
 			let toLayer   = this.layers[layerInd];
 			for (let toNodeInd = 0; toNodeInd < toLayer.nodes.length; toNodeInd++) {
 				let toNode = toLayer.nodes[toNodeInd];
-				// let biasNode = new Node(1);
-				// let biasEdge = new Edge(biasNode, toNode);
-				// toNode.inEdges.push(biasEdge);
-				// toNode.biasNode = biasNode;
+				let biasNode = new Node(1);
+				let biasEdge = new Edge(biasNode, toNode);
+				toNode.inEdges.push(biasEdge);
+				toNode.biasNode = biasNode;
 				for (let fromNodeInd = 0; fromNodeInd < fromLayer.nodes.length; fromNodeInd++) {
 					let fromNode = fromLayer.nodes[fromNodeInd];
 					let edge = new Edge(fromNode, toNode);
@@ -169,7 +169,7 @@ class SequentialModel {
 			for (let layerInd = 1; layerInd < this.layers.length; layerInd++) {
 				layer = this.layers[layerInd];
 				for (let node of layer.nodes) {
-					// node.biasNode.outputHistory[i] = node.biasNode.output;
+					node.biasNode.outputHistory[i] = node.biasNode.output;
 					node.activate();
 					node.output = layer.activation(node.activation);
 					node.activationHistory[i] = node.activation;	
